@@ -1,0 +1,57 @@
+{
+  "d": {
+    "properties": {
+      "CITY": {
+        "type": "keyword",
+        "copy_to": "COPYTO"
+      },
+      "DISTRICT": {
+        "type": "text",
+        "copy_to": "COPYTO",
+        "analyzer": "standard",
+        "search_analyzer": "ik_max_word",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "ORG_NAME": {
+        "type": "text",
+        "copy_to": "COPYTO",
+        "analyzer": "standard",
+        "search_analyzer": "standard",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "ID_NO": {
+        "type": "text",
+        "copy_to": "COPYTO",
+        "analyzer": "standard",
+        "search_analyzer": "standard",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "COPYTO": {
+        "type": "text",
+        "analyzer": "standard",
+        "search_analyzer": "standard",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      }
+    }
+  }
+}
