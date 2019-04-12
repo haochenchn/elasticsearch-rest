@@ -2,10 +2,9 @@ package com.aaron.es;
 
 import com.aaron.es.model.EsQueryVo;
 import com.aaron.es.model.EsQueryResult;
-import com.whhx.system.utils.check.CommonCheckUtil;
-import com.whhx.system.utils.common.JsonUtils;
+import com.aaron.es.util.JsonUtils;
 import javafx.util.Pair;
-import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -21,6 +20,7 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
  */
 @Component
 public class ElasticsearchTemplate {
-    Logger logger = com.whhx.system.utils.log.Logger.getLogger(this.getClass());
+    Logger logger = LogManager.getLogger(this.getClass());
     @Autowired
     private TransportClient client;
 
@@ -58,16 +58,13 @@ public class ElasticsearchTemplate {
         // must
         BoolQueryBuilder bqbMust = QueryBuilders.boolQuery();
         for(String term:terms){
-            //增加模糊匹配
-            if(CommonCheckUtil.isNumber(term)){
-                bqbMust.must(QueryBuilders.wildcardQuery("FULL_TEXT", "*"+term+"*"));
-            }else {
-                bqbMust.must(QueryBuilders.matchPhraseQuery("FULL_TEXT", term));
+
+            bqbMust.must(QueryBuilders.matchPhraseQuery("FULL_TEXT", term));
+//                bqbMust.must(QueryBuilders.wildcardQuery("FULL_TEXT", "*"+term+"*"));
 //              bqbMust.must(QueryBuilders.multiMatchQuery(term));
-            }
         }
         SortBuilder sortBuilder = null;
-        if(StringUtils.isNotBlank(queryVo.getSortField())){
+        if(!StringUtils.isEmpty(queryVo.getSortField())){
             sortBuilder = SortBuilders.fieldSort(queryVo.getSortField());
             sortBuilder.order(queryVo.isDesc() ? SortOrder.DESC : SortOrder.ASC);
         }

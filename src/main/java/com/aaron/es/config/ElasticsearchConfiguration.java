@@ -1,10 +1,12 @@
 package com.aaron.es.config;
 
 import com.aaron.es.util.EsConstant;
-import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpHost;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
@@ -15,6 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.util.StringUtils;
 
 import java.net.InetAddress;
 
@@ -25,9 +28,9 @@ import java.net.InetAddress;
  * @date 2019/4/2
  */
 @Configuration
-@ComponentScan("com.whhx.oneKeySearch")
+@ComponentScan("com.aaron.es")
 public class ElasticsearchConfiguration {
-    private Logger logger = com.whhx.system.utils.log.Logger.getLogger(this.getClass());
+    private Logger logger = LogManager.getLogger(this.getClass());
 
     //tcp通信
     @Value("${es.tcp.hosts}")
@@ -95,23 +98,17 @@ public class ElasticsearchConfiguration {
             }
             RestClientBuilder builder = RestClient.builder(httpHosts);
             // 异步httpclient连接延时配置
-            builder.setRequestConfigCallback(new RequestConfigCallback() {
-                @Override
-                public Builder customizeRequestConfig(Builder requestConfigBuilder) {
-                    requestConfigBuilder.setConnectTimeout(connectTimeOut);
-                    requestConfigBuilder.setSocketTimeout(socketTimeOut);
-                    requestConfigBuilder.setConnectionRequestTimeout(connectionRequestTimeOut);
-                    return requestConfigBuilder;
-                }
+            builder.setRequestConfigCallback(requestConfigBuilder -> {
+                requestConfigBuilder.setConnectTimeout(connectTimeOut);
+                requestConfigBuilder.setSocketTimeout(socketTimeOut);
+                requestConfigBuilder.setConnectionRequestTimeout(connectionRequestTimeOut);
+                return requestConfigBuilder;
             });
             // 异步httpclient连接数配置
-            builder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
-                @Override
-                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-                    httpClientBuilder.setMaxConnTotal(maxConnectNum);
-                    httpClientBuilder.setMaxConnPerRoute(maxConnectPerRoute);
-                    return httpClientBuilder;
-                }
+            builder.setHttpClientConfigCallback(httpClientBuilder -> {
+                httpClientBuilder.setMaxConnTotal(maxConnectNum);
+                httpClientBuilder.setMaxConnPerRoute(maxConnectPerRoute);
+                return httpClientBuilder;
             });
             restClient = new RestHighLevelClient(builder);
         } catch (Exception e) {

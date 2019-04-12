@@ -2,8 +2,8 @@ package com.aaron.es.config;
 
 import com.aaron.es.ElasticsearchIndex;
 import com.aaron.es.annotation.ESMetaData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -25,7 +25,7 @@ public class CreateIndex implements ApplicationListener, ApplicationContextAware
     @Autowired
     ElasticsearchIndex elasticsearchIndex;
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private Logger logger = LogManager.getLogger(this.getClass());
 
     private ApplicationContext applicationContext;
 

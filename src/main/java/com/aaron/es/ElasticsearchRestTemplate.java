@@ -5,8 +5,9 @@ import com.aaron.es.enums.DataType;
 import com.aaron.es.model.*;
 import com.aaron.es.util.EsConstant;
 import com.aaron.es.util.EsTools;
-import com.whhx.system.utils.common.BeanTools;
-import com.whhx.system.utils.common.JsonUtils;
+import com.aaron.es.util.JsonUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -27,8 +28,6 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -45,7 +44,7 @@ import java.util.*;
  **/
 @Component
 public class ElasticsearchRestTemplate<T, M> {
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private Logger logger = LogManager.getLogger(this.getClass());
 
     @Autowired
     RestHighLevelClient restClient;
@@ -101,10 +100,10 @@ public class ElasticsearchRestTemplate<T, M> {
             //                    .source(XContentType.JSON, JsonUtils.obj2String(tt)));
             if(StringUtils.isEmpty(id)){
                 rrr.add(new IndexRequest(metaData.getIndexname(), metaData.getIndextype())
-                        .source(BeanTools.object2Map(tt)));
+                        .source(JsonUtils.obj2Map(tt)));
             }else {
                 rrr.add(new IndexRequest(metaData.getIndexname(), metaData.getIndextype(), id)
-                        .source(BeanTools.object2Map(tt)));
+                        .source(JsonUtils.obj2Map(tt)));
             }
         }
         BulkResponse bulkResponse = restClient.bulk(rrr);
@@ -236,7 +235,7 @@ public class ElasticsearchRestTemplate<T, M> {
                 hmap.forEach((k, v) ->
                     {
                         try {
-                            Object obj = BeanTools.map2Object(hmap,clazz);
+                            Object obj = JsonUtils.map2Obj(hmap,clazz);
                             BeanUtils.copyProperties(obj, t, EsTools.getNoValuePropertyNames(obj));
                         } catch (Exception e) {
                             e.printStackTrace();

@@ -1,12 +1,5 @@
 package com.aaron.system.util;
 
-/**
- *@ClassName:DESUtils
- *@Description:TODO
- *@author 江大润
- *@date 2015年8月27日
- *
- */
 import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
@@ -14,9 +7,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-
-import com.whhx.system.utils.common.HexConvert;
-import com.whhx.system.utils.constant.DeEncodeConst;
 
 
 public class DESUtils {
@@ -30,10 +20,10 @@ public class DESUtils {
         
         public static void main(String[] args) throws Exception {  
             String data = "hxtest_123456780";  
-            String str = HexConvert.parseByte2HexStr(DESUtils.encryptV3(data.getBytes(),HexConvert.parseHexStr2Byte(DeEncodeConst.SESSION_KEY)));  
+            String str = HexConvert.parseByte2HexStr(DESUtils.encryptV3(data.getBytes(),HexConvert.parseHexStr2Byte("11111111")));
             System.out.println("普通加密后: " + str);  
             
-            String str3=new String(DESUtils.decryptV3(HexConvert.parseHexStr2Byte(str), HexConvert.parseHexStr2Byte(DeEncodeConst.SESSION_KEY)));
+            String str3=new String(DESUtils.decryptV3(HexConvert.parseHexStr2Byte(str), HexConvert.parseHexStr2Byte("11111111")));
             System.out.println("解密后: " + str3); 
         }  
           
@@ -66,7 +56,7 @@ public class DESUtils {
         /** 
          * 用指定的key对数据进行DES加密. 
          * @param data 待加密的数据 
-         * @param key DES加密的key 
+         * @param password DES加密的key
          * @return 返回DES加密后的数据 
          * @throws Exception 
          * version 1.2
@@ -81,7 +71,7 @@ public class DESUtils {
         /** 
          * 用指定的key对数据进行DES加密. 
          * @param data 待加密的数据 
-         * @param key DES加密的key 
+         * @param password DES加密的key
          * @return 返回DES加密后的数据 
          * @throws Exception 
          * version 1.3
@@ -123,7 +113,7 @@ public class DESUtils {
         /** 
          * 用指定的key对数据进行DES解密. 
          * @param data 待解密的数据 
-         * @param key DES解密的key 
+         * @param password DES解密的key
          * @return 返回DES解密后的数据 
          * @throws Exception 
          * version 1.2
@@ -139,7 +129,7 @@ public class DESUtils {
         /** 
          * 用指定的key对数据进行DES解密. 
          * @param data 待解密的数据 
-         * @param key DES解密的key 
+         * @param password DES解密的key
          * @return 返回DES解密后的数据 
          * @throws Exception
          * version 1.3

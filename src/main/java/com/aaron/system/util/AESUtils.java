@@ -13,7 +13,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.whhx.system.utils.common.HexConvert;
 
 
 /**
