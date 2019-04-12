@@ -41,6 +41,12 @@ public class ElasticsearchConfiguration {
     //是否开启集群嗅探功能
     @Value("${es.sniff:false}")
     private Boolean clientsniff;
+    private int connectTimeOut = 1000; // 连接超时时间
+    private int socketTimeOut = 30000; // 连接超时时间
+    private int connectionRequestTimeOut = 500; // 获取连接的超时时间
+
+    private int maxConnectNum = 100; // 最大连接数
+    private int maxConnectPerRoute = 100; // 最大路由连接数
 
 
     @Bean(destroyMethod = "close")
@@ -87,8 +93,27 @@ public class ElasticsearchConfiguration {
                 String h = hosts[i];
                 httpHosts[i] = new HttpHost(h.split(":")[0], Integer.parseInt(h.split(":")[1]), "http");
             }
-            restClient = new RestHighLevelClient(
-                    RestClient.builder(httpHosts));
+            RestClientBuilder builder = RestClient.builder(httpHosts);
+            // 异步httpclient连接延时配置
+            builder.setRequestConfigCallback(new RequestConfigCallback() {
+                @Override
+                public Builder customizeRequestConfig(Builder requestConfigBuilder) {
+                    requestConfigBuilder.setConnectTimeout(connectTimeOut);
+                    requestConfigBuilder.setSocketTimeout(socketTimeOut);
+                    requestConfigBuilder.setConnectionRequestTimeout(connectionRequestTimeOut);
+                    return requestConfigBuilder;
+                }
+            });
+            // 异步httpclient连接数配置
+            builder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
+                @Override
+                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+                    httpClientBuilder.setMaxConnTotal(maxConnectNum);
+                    httpClientBuilder.setMaxConnPerRoute(maxConnectPerRoute);
+                    return httpClientBuilder;
+                }
+            });
+            restClient = new RestHighLevelClient(builder);
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("Elasticsearch [RestHighLevelClient] 初始化失败！"+e.getMessage());
