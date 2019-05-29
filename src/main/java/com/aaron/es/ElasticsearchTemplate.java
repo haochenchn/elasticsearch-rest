@@ -1,11 +1,12 @@
 package com.aaron.es;
 
-import com.aaron.es.model.EsQueryVo;
 import com.aaron.es.model.EsQueryResult;
+import com.aaron.es.model.EsQueryVo;
 import com.aaron.es.util.JsonUtils;
 import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.action.search.MultiSearchRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
@@ -14,6 +15,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
@@ -48,7 +50,7 @@ public class ElasticsearchTemplate {
      * @throws Exception
      */
     public EsQueryResult query(EsQueryVo queryVo) throws Exception {
-        String[] terms =getfullText(queryVo.getKeyword());
+        String[] terms = getTerms(queryVo.getKeyword());
         if(terms==null){
             return null;
         }
@@ -121,10 +123,93 @@ public class ElasticsearchTemplate {
         return searchResponse;
     }
 
+    //根据词条生成BoolQueryBuilder
+    protected BoolQueryBuilder getBoolQueryBuilderForTerms(String[] terms){
+        if(terms == null || terms.length == 0){
+            return null;
+        }
+        BoolQueryBuilder bqbMust = QueryBuilders.boolQuery();
+        for(String term:terms){
+            bqbMust.must(QueryBuilders.matchPhraseQuery("FULL_TEXT", term));
+//          bqbMust.must(QueryBuilders.multiMatchQuery(term));
+
+        }
+        return bqbMust;
+    }
+    private SearchRequestBuilder getSearchRequestBuilderForTerms(TransportClient client, String indice, String[] terms) throws Exception {
+        // must
+        BoolQueryBuilder bqbMust = getBoolQueryBuilderForTerms(terms);
+        SearchRequestBuilder sr = client
+                .prepareSearch(indice)
+                .setSource(new SearchSourceBuilder()
+                        .size(0)
+                        .query(QueryBuilders
+                                .boolQuery()
+                                .must(bqbMust)));
+        return sr;
+    }
+
+    public EsQueryResult queryByQueryString(EsQueryVo queryVo) throws Exception {
+        String[] terms = getTerms(queryVo.getKeyword());
+        if(terms==null){
+            return null;
+        }
+        // must
+//        BoolQueryBuilder bqbMust = getBoolQueryBuilderForTerms(terms);
+        String queryString = queryStringbyMultiTerms(terms);
+        SearchResponse searchResponse=client
+                .prepareSearch(splitIndices(queryVo.getIndices()))
+                .setSource(new SearchSourceBuilder().query(QueryBuilders.
+                        queryStringQuery(queryString))).setFrom(getFromValue(queryVo.getPageNum(),queryVo.getPageSize())).setSize(queryVo.getPageSize()).get();
+        StringBuilder sb = new StringBuilder();
+        sb.append(",共找到[").append(searchResponse.getHits().getTotalHits()).append("]条。");
+        logger.info(sb);
+        return translate2QueryResult(searchResponse,false);
+    }
+
+    //queryString中多个token查询所使用的字符串形式 eg:"+中国 +武汉市 +洪山区"
+    //用于模糊查询
+    public String queryStringbyMultiTerms(String[] terms){
+
+        StringBuffer sbf=new StringBuffer();
+
+        for(int i=0;i<terms.length;i++){
+            if(i!=terms.length-1){
+                sbf.append("+"+terms[i]+" ");
+            }else{
+                sbf.append("+"+terms[i]+" ");
+            }
+        }
+        String queryString=sbf.toString();
+
+        return queryString;
+    }
+
+
+    private MultiSearchRequestBuilder getQueryStringReqBulder(TransportClient client, EsQueryVo queryVo) throws Exception{
+        String[] terms = getTerms(queryVo.getKeyword());
+        if(terms==null){
+            return null;
+        }
+        String queryString=queryStringbyMultiTerms(terms);
+        queryVo.setIndices("");
+        String[] indices =splitIndices(queryVo.getIndices());
+        MultiSearchRequestBuilder msrb=client.prepareMultiSearch();
+
+        for(String indice:indices){
+            SearchRequestBuilder srb=client
+                    .prepareSearch(indice)
+                    .setSource(new SearchSourceBuilder().size(0).query(QueryBuilders.
+                            queryStringQuery(queryString)));
+            msrb.add(srb);
+        }
+        return msrb;
+    }
+
     /**
      * 获取文本的term搜索数组
      */
-    protected String[] getfullText(String searchText)throws Exception{ if(StringUtils.isEmpty(searchText)){
+    protected String[] getTerms(String searchText)throws Exception{ if(StringUtils.isEmpty(searchText)){
             return null;
         }
         //将多个分隔符空格替换为单个空格
